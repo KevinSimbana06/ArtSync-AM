@@ -1,9 +1,8 @@
-import Axios from "axios";
+import axios from "axios";
 
-export const client = Axios.create({
+export const client = axios.create({
     baseURL: process.env.EXPO_PUBLIC_API_URL,
     headers: {
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
     }
 });
-
