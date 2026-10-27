@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import { useEditFavorite, useFavorites } from '../hooks/useFavorites';
 import { Artwork } from '../types/art';
+import { Theme } from '../constants/theme';
 
 export default function Favorite() {
     const { data, isLoading, isFetching, isError, error, refetch } = useFavorites();
-    const { mutate: editFavorite, isPending: isEditing } = useEditFavorite();
+    const { mutate: editFavorite } = useEditFavorite();
 
     // Estado para el modal de edición
     const [selectedItem, setSelectedItem] = useState<Artwork | null>(null);
@@ -55,13 +56,17 @@ export default function Favorite() {
                 },
             }
         );
+
+        // Cierra inmediatamente para permitir editar otras notas mientras
+        // esta mutación permanece encolada cuando no hay conexión.
+        setSelectedItem(null);
     };
 
     // Solo pantalla completa de carga si aún no existen datos en caché
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#e63946" />
+                <ActivityIndicator size="large" color={Theme.colors.primary} />
                 <Text style={styles.loadingText}>Cargando tus favoritos...</Text>
             </View>
         );
@@ -105,6 +110,15 @@ export default function Favorite() {
                     data={favoritesList}
                     keyExtractor={(item) => String(item.id)}
                     contentContainerStyle={styles.listContent}
+                    ListHeaderComponent={
+                        <View style={styles.listHeader}>
+                            <Text style={styles.kicker}>MI SELECCIÓN</Text>
+                            <Text style={styles.screenTitle}>Obras favoritas</Text>
+                            <Text style={styles.screenSubtitle}>
+                                Tus piezas guardadas y notas de contemplación.
+                            </Text>
+                        </View>
+                    }
                     renderItem={({ item }) => {
                         const imageUrl = item.image_id
                             ? `https://www.artic.edu/iiif/2/${item.image_id}/full/400,/0/default.jpg`
@@ -137,7 +151,7 @@ export default function Favorite() {
                                 {/* Nota personal si existe */}
                                 {item.personal_note ? (
                                     <View style={styles.noteBox}>
-                                        <Text style={styles.noteLabel}>📝 Nota personal:</Text>
+                                        <Text style={styles.noteLabel}>NOTA PERSONAL</Text>
                                         <Text style={styles.noteText}>{item.personal_note}</Text>
                                     </View>
                                 ) : null}
@@ -148,7 +162,7 @@ export default function Favorite() {
                                         onPress={() => openEditModal(item)}
                                     >
                                         <Text style={styles.editButtonText}>
-                                            ✏️ Editar favorito / nota
+                                            ★ Editar favorito / nota
                                         </Text>
                                     </Pressable>
                                 </View>
@@ -198,10 +212,9 @@ export default function Favorite() {
                             <Pressable
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={handleSaveEdit}
-                                disabled={isEditing}
                             >
                                 <Text style={styles.saveButtonText}>
-                                    {isEditing ? 'Guardando...' : 'Guardar cambios'}
+                                    Guardar cambios
                                 </Text>
                             </Pressable>
                         </View>
@@ -215,57 +228,59 @@ export default function Favorite() {
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: Theme.colors.background,
     },
     list: {
         flex: 1,
     },
     listContent: {
-        padding: 14,
-        gap: 16,
+        padding: Theme.spacing.md,
+        paddingBottom: Theme.spacing.xl,
+        gap: Theme.spacing.md,
     },
     centerContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 24,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: Theme.colors.background,
     },
     loadingText: {
         marginTop: 12,
         fontSize: 15,
-        color: '#555',
-        fontWeight: '500',
+        color: Theme.colors.textSecondary,
+        fontFamily: Theme.typography.fontBody,
     },
     errorText: {
         fontSize: 15,
-        color: '#d90429',
+        color: Theme.colors.primaryDark,
         textAlign: 'center',
         marginBottom: 16,
     },
     retryButton: {
-        backgroundColor: '#e63946',
+        backgroundColor: Theme.colors.primary,
         paddingVertical: 10,
         paddingHorizontal: 20,
-        borderRadius: 8,
+        borderRadius: Theme.radius.full,
     },
     retryButtonText: {
-        color: '#fff',
+        color: Theme.colors.textOnPrimary,
         fontWeight: 'bold',
     },
     emptyTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#343a40',
-        marginBottom: 8,
+        color: Theme.colors.textPrimary,
+        fontFamily: Theme.typography.fontTitle,
+        marginBottom: Theme.spacing.sm,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#6c757d',
+        color: Theme.colors.textSecondary,
         textAlign: 'center',
     },
     backgroundFetchBar: {
-        backgroundColor: '#e9ecef',
+        backgroundColor: Theme.colors.surfaceMuted,
         paddingVertical: 6,
         paddingHorizontal: 12,
         flexDirection: 'row',
@@ -274,31 +289,33 @@ const styles = StyleSheet.create({
     },
     backgroundFetchText: {
         fontSize: 12,
-        color: '#495057',
+        color: Theme.colors.textSecondary,
         fontWeight: '500',
     },
     itemCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: Theme.colors.surface,
+        borderRadius: Theme.radius.md,
         padding: 16,
-        shadowColor: '#000',
+        borderWidth: 1,
+        borderColor: Theme.colors.cardBorder,
+        shadowColor: Theme.colors.primaryDark,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 6,
         elevation: 2,
     },
     pendingBadge: {
-        backgroundColor: '#fff3cd',
+        backgroundColor: Theme.colors.primaryLight,
         borderWidth: 1,
-        borderColor: '#ffeeba',
-        borderRadius: 6,
+        borderColor: '#F3B4C9',
+        borderRadius: Theme.radius.full,
         paddingVertical: 4,
         paddingHorizontal: 8,
         marginBottom: 10,
         alignSelf: 'flex-start',
     },
     pendingBadgeText: {
-        color: '#856404',
+        color: Theme.colors.primaryDark,
         fontSize: 12,
         fontWeight: '700',
     },
@@ -307,44 +324,44 @@ const styles = StyleSheet.create({
         height: 230,
         borderRadius: 8,
         marginBottom: 12,
-        backgroundColor: '#e9ecef',
+        backgroundColor: Theme.colors.imagePlaceholder,
     },
     placeholderImage: {
         justifyContent: 'center',
         alignItems: 'center',
     },
     placeholderText: {
-        color: '#868e96',
+        color: Theme.colors.textMuted,
         fontSize: 13,
     },
     itemTitle: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: '#212529',
+        fontSize: 22,
+        fontFamily: Theme.typography.fontTitle,
+        color: Theme.colors.textPrimary,
         marginBottom: 4,
     },
     itemArtist: {
         fontSize: 13,
-        color: '#6c757d',
+        color: Theme.colors.textSecondary,
         marginBottom: 10,
     },
     noteBox: {
-        backgroundColor: '#f1f3f5',
-        borderRadius: 8,
+        backgroundColor: Theme.colors.surfaceMuted,
+        borderRadius: Theme.radius.sm,
         padding: 10,
         marginBottom: 12,
         borderLeftWidth: 3,
-        borderLeftColor: '#457b9d',
+        borderLeftColor: Theme.colors.primary,
     },
     noteLabel: {
         fontSize: 12,
         fontWeight: '700',
-        color: '#495057',
+        color: Theme.colors.primaryDark,
         marginBottom: 2,
     },
     noteText: {
         fontSize: 13,
-        color: '#212529',
+        color: Theme.colors.textPrimary,
         fontStyle: 'italic',
     },
     actionsRow: {
@@ -353,15 +370,15 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     editButton: {
-        backgroundColor: '#e8f4f8',
+        backgroundColor: Theme.colors.primaryLight,
         paddingVertical: 8,
         paddingHorizontal: 14,
-        borderRadius: 8,
+        borderRadius: Theme.radius.full,
         borderWidth: 1,
-        borderColor: '#b8d8e8',
+        borderColor: Theme.colors.primary,
     },
     editButtonText: {
-        color: '#1d3557',
+        color: Theme.colors.primaryDark,
         fontSize: 13,
         fontWeight: '600',
     },
@@ -372,8 +389,8 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 14,
+        backgroundColor: Theme.colors.surface,
+        borderRadius: Theme.radius.lg,
         padding: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -384,24 +401,25 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#1d3557',
+        color: Theme.colors.textPrimary,
+        fontFamily: Theme.typography.fontTitle,
         marginBottom: 16,
     },
     inputLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#495057',
+        color: Theme.colors.textSecondary,
         marginBottom: 6,
     },
     textInput: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: Theme.colors.background,
         borderWidth: 1,
-        borderColor: '#ced4da',
-        borderRadius: 8,
+        borderColor: Theme.colors.cardBorder,
+        borderRadius: Theme.radius.sm,
         padding: 10,
         fontSize: 14,
         marginBottom: 14,
-        color: '#212529',
+        color: Theme.colors.textPrimary,
     },
     textArea: {
         height: 70,
@@ -416,20 +434,43 @@ const styles = StyleSheet.create({
     modalButton: {
         paddingVertical: 10,
         paddingHorizontal: 18,
-        borderRadius: 8,
+        borderRadius: Theme.radius.full,
     },
     cancelButton: {
-        backgroundColor: '#e9ecef',
+        backgroundColor: Theme.colors.surfaceMuted,
     },
     cancelButtonText: {
-        color: '#495057',
+        color: Theme.colors.textSecondary,
         fontWeight: '600',
     },
     saveButton: {
-        backgroundColor: '#e63946',
+        backgroundColor: Theme.colors.primary,
     },
     saveButtonText: {
-        color: '#fff',
+        color: Theme.colors.textOnPrimary,
         fontWeight: 'bold',
+    },
+    listHeader: {
+        paddingTop: Theme.spacing.sm,
+        paddingBottom: Theme.spacing.sm,
+    },
+    kicker: {
+        color: Theme.colors.primary,
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 2,
+        marginBottom: Theme.spacing.sm,
+    },
+    screenTitle: {
+        color: Theme.colors.textPrimary,
+        fontFamily: Theme.typography.fontTitle,
+        fontSize: 32,
+        marginBottom: Theme.spacing.xs,
+    },
+    screenSubtitle: {
+        color: Theme.colors.textSecondary,
+        fontFamily: Theme.typography.fontBody,
+        fontSize: 14,
+        lineHeight: 21,
     },
 });

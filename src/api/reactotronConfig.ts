@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Reactotron from "reactotron-react-native";
 
-// el emulador y dispositivos conectados por USB se comunican a través de 'localhost'.
 const reactotron = Reactotron.setAsyncStorageHandler(AsyncStorage)
   .configure({
     name: "ArtSync",

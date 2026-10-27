@@ -2,10 +2,12 @@
 import '../api/reactotronConfig';
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
 import { asyncStoragePersister, CACHE_MAX_AGE, queryClient } from '../api/queryClient';
 import { NetworkStatusBanner } from '../components/NetworkStatusBanner';
+import { Theme } from '../constants/theme';
 
 export default function RootLayout() {
     return (
@@ -24,15 +26,60 @@ export default function RootLayout() {
                 <NetworkStatusBanner />
                 <Tabs
                     screenOptions={{
-                        headerStyle: { backgroundColor: '#1a1a24' },
-                        headerTintColor: '#ffffff',
-                        tabBarStyle: { backgroundColor: '#1a1a24', borderTopColor: '#333' },
-                        tabBarActiveTintColor: '#e63946',
-                        tabBarInactiveTintColor: '#888',
+                        headerStyle: { backgroundColor: Theme.colors.background },
+                        headerTintColor: Theme.colors.textPrimary,
+                        headerTitleStyle: {
+                            color: Theme.colors.textPrimary,
+                            fontFamily: Theme.typography.fontTitle,
+                        },
+                        tabBarStyle: {
+                            backgroundColor: Theme.colors.surface,
+                            borderTopColor: Theme.colors.cardBorder,
+                            height: 68,
+                            paddingTop: 8,
+                        },
+                        tabBarActiveTintColor: Theme.colors.primary,
+                        tabBarInactiveTintColor: Theme.colors.textMuted,
+                        tabBarLabelStyle: {
+                            fontFamily: Theme.typography.fontBody,
+                            fontWeight: '700',
+                        },
                     }}
                 >
-                    <Tabs.Screen name="index" options={{ title: "Biblioteca de Arte" }} />
-                    <Tabs.Screen name="favorite" options={{ title: "Mis Favoritos" }} />
+                    <Tabs.Screen
+                        name="index"
+                        options={{
+                            title: "Biblioteca de Arte",
+                            tabBarIcon: ({ color, size }) => (
+                                <SymbolView
+                                    name={{
+                                        ios: 'paintpalette.fill',
+                                        android: 'palette',
+                                        web: 'palette',
+                                    }}
+                                    tintColor={color}
+                                    size={size}
+                                />
+                            ),
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="favorite"
+                        options={{
+                            title: "Mis Favoritos",
+                            tabBarIcon: ({ color, size }) => (
+                                <SymbolView
+                                    name={{
+                                        ios: 'star.fill',
+                                        android: 'star',
+                                        web: 'star',
+                                    }}
+                                    tintColor={color}
+                                    size={size}
+                                />
+                            ),
+                        }}
+                    />
                 </Tabs>
             </View>
         </PersistQueryClientProvider>
