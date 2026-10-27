@@ -1,98 +1,139 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Alert,
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useArt } from "../hooks/useArt";
+import { useAddFavorites } from "../hooks/useFavorites";
+import { Artwork } from "../types/art";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function App() {
+  const { data, isLoading, isError, error } = useArt();
+  const { mutateAsync: addFavorites, isPending } = useAddFavorites();
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+  const handleAddToFavorites = async (item: Artwork) => {
+    addFavorites(
+      {
+        title: item.title,
+        artist_display: item.artist_display,
+        image_id: item.image_id,
+      },
+      {
+        onSuccess: () => Alert.alert("Arte agregado a favoritos"),
+        onError: (err) => {
+          Alert.alert("Error al agregar el arte a favoritos");
+          console.log(err);
+        },
+      },
+    );
+  };
+
+  if (isLoading) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <View style={styles.container}>
+        <Text style={styles.text}>Cargando...</Text>
+      </View>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>Error: {error?.message}</Text>
+      </View>
+    );
+  }
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <FlatList
+      style={{ flex: 1 }}
+      data={data}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => {
+        const imageUrl = item.image_id
+          ? `https://www.artic.edu/iiif/2/${item.image_id}/full/400,/0/default.jpg`
+          : null;
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        return (
+          <Pressable
+            onPress={() => Alert.alert(item.title, item.artist_display)}
+          >
+            <View style={styles.itemCard}>
+              {imageUrl ? (
+                <Image source={{ uri: imageUrl }} style={styles.itemImage} />
+              ) : null}
+              <Text style={styles.itemTitle}>{item.title}</Text>
+              {item.artist_display ? (
+                <Text style={styles.itemArtist}>{item.artist_display}</Text>
+              ) : null}
+            </View>
+            <Pressable
+              style={styles.favoriteButton}
+              onPress={() => handleAddToFavorites(item)}
+              disabled={isPending}
+            >
+              <Text style={styles.favoriteButtonText}>
+                {isPending ? "Agregando..." : "Agregar a favoritos"}
+              </Text>
+            </Pressable>
+          </Pressable>
+        );
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  itemCard: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    backgroundColor: "#fff",
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  itemImage: {
+    width: "100%",
+    height: 250,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#f0f0f0",
   },
-  title: {
-    textAlign: 'center',
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#222",
   },
-  code: {
-    textTransform: 'uppercase',
+  itemArtist: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 4,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  text: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  favoriteButton: {
+    marginTop: 12,
+    backgroundColor: "#fff0f3",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#ffccd5",
+  },
+  favoriteButtonText: {
+    color: "#e63946",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
